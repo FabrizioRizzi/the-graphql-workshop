@@ -1,9 +1,24 @@
 import { loadPets, ownersByPetNames } from './lib/db.js'
+import mercurius from 'mercurius'
 
-const users = [
+const { ErrorWithProps } = mercurius
+
+const usersLocale = [
   { name: 'Alice', locale: 'en' },
   { name: 'Bob', locale: 'fr' }
 ]
+
+const users = {
+  1: {
+    id: '1',
+    name: 'John'
+  },
+  2: {
+    id: '2',
+    name: 'Jane'
+  }
+}
+
 const schema = `
   type Person {
     name: String
@@ -12,14 +27,19 @@ const schema = `
     name: String
     owner: Person
   }
-  type User {
+  type UserLocale {
     name: String
     locale: String
+  }
+  type User {
+    id: ID!
+    name: String
   }
   type Query {
     pets: [Pet]
     add(x: Int, y: Int): Int
-    getUserByLocale(locale: String): User
+    getUserByLocale(locale: String): UserLocale
+    findUser(id: Int): User
   }
 `
 
@@ -28,7 +48,16 @@ const resolvers = {
     add: (_, { x, y }) => x + y,
     pets: (_, __, context) => loadPets(context.app.pg),
     getUserByLocale: (_, __, { locale }) =>
-      users.find(user => user.locale === locale)
+      usersLocale.find(user => user.locale === locale),
+    findUser: (_, { id }) => {
+      const user = users[id]
+      if (user) return users[id]
+      else
+        throw new ErrorWithProps('Invalid User ID', {
+          id,
+          code: 'USER_ID_INVALID'
+        })
+    }
   }
 }
 
