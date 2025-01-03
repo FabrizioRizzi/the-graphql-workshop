@@ -15,7 +15,8 @@ function buildServer() {
     schema,
     resolvers,
     loaders,
-    graphiql: true
+    graphiql: true,
+    context: () => ({ locale: 'en' })
   })
 
   fastify.register(import('@fastify/postgres'), {
